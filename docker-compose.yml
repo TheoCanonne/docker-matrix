@@ -1,0 +1,32 @@
+version: '3'
+
+volumes:
+  media-store:
+
+
+
+services: 
+
+  synapse:
+    image: matrixdotorg/synapse:latest
+    restart: unless-stopped
+    environment:
+      - SYNAPSE_CONFIG_PATH=/etc/homeserver.yaml
+    volumes:
+      - ./matrix-config/homeserver.yaml:/etc/homeserver.yaml
+      - ./matrix-config/my.matrix.host.signing.key:/etc/synapsetest.signing.key
+      - ./matrix-config/synapse.log:/synapse.log
+      - ./files:/data
+      - media-store:/media_store
+    depends_on:
+      - db
+  db:
+    image: postgres:10-alpine
+    environment:
+      - POSTGRES_USER=synapse
+      - POSTGRES_PASSWORD=synapse
+      - POSTGRES_DB=synapse
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./schemas:/var/lib/postgresql/data
