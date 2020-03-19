@@ -4,8 +4,22 @@ volumes:
   media-store:
 
 
-
 services: 
+
+  traefik:
+    image: "traefik"
+    restart: always
+    container_name: "traefik"
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
 
   synapse:
     image: matrixdotorg/synapse:latest
@@ -20,6 +34,13 @@ services:
       - media-store:/media_store
     depends_on:
       - db
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.synapse.entryPoints=web
+      - traefik.http.routers.synapse.rule=Host(`matrix.local`)
+
+
+      
   db:
     image: postgres:10-alpine
     environment:
@@ -31,3 +52,14 @@ services:
       - "5432:5432"
     volumes:
       - ./schemas:/var/lib/postgresql/data
+
+  riot:
+    image: bubuntux/riot-web
+    container_name: riot
+    restart: unless-stopped
+    depends_on:
+      - synapse
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.riot.entryPoints=web
+      - traefik.http.routers.riot.rule=Host(`chat.local`)

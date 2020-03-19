@@ -27,4 +27,6 @@ database:
     host: "db"
     port: "5432"
 
-report_stats: False
+report_stats: false
+
+enable_registration: true
